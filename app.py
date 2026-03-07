@@ -4,10 +4,6 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
-
-print("CLIENT ID:", os.getenv("GOOGLE_CLIENT_ID"))
-print("CLIENT SECRET:", os.getenv("GOOGLE_CLIENT_SECRET"))
-
 import sqlite3
 from flask_dance.contrib.google import make_google_blueprint, google
 
@@ -35,6 +31,7 @@ app.register_blueprint(google_bp, url_prefix="/login")
 
 
 # ---------------- DATABASE INIT ----------------
+
 def init_db():
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
@@ -67,6 +64,7 @@ init_db()
 
 
 # ---------------- GOOGLE LOGIN SUCCESS ----------------
+
 @app.route("/google_login")
 def google_login():
 
@@ -90,10 +88,13 @@ def google_login():
     if not user:
         hashed_password = generate_password_hash(email)
 
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (email, hashed_password))
+        cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (email, hashed_password)
+        )
 
         conn.commit()
-    
+
         cursor.execute("SELECT id FROM users WHERE username=?", (email,))
         user = cursor.fetchone()
 
@@ -105,6 +106,7 @@ def google_login():
 
 
 # ---------------- HOME ----------------
+
 @app.route("/")
 def home():
     if not google.authorized:
@@ -112,17 +114,27 @@ def home():
     return redirect(url_for("google_login"))
 
 
+# ---------------- LOGOUT ----------------
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+
 # ---------------- CREATE TASK ----------------
+
 @app.route("/create")
 def create_task():
 
     if "user_id" not in session:
-        return redirect(url_for("login_page"))
+        return redirect("/")
 
     return render_template("create_task.html")
 
 
 # ---------------- ADD TASK ----------------
+
 @app.route("/add", methods=["POST"])
 def add_task():
 
@@ -154,11 +166,12 @@ def add_task():
 
 
 # ---------------- VIEW TASKS ----------------
+
 @app.route("/tasks")
 def all_tasks():
 
     if "user_id" not in session:
-        return redirect(url_for("login_page"))
+        return redirect("/")
 
     user_id = session["user_id"]
 
@@ -190,5 +203,6 @@ def all_tasks():
 
 
 # ---------------- RUN ----------------
+
 if __name__ == "__main__":
     app.run(debug=True)
