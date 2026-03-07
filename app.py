@@ -4,6 +4,10 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
+
+print("CLIENT ID:", os.getenv("GOOGLE_CLIENT_ID"))
+print("CLIENT SECRET:", os.getenv("GOOGLE_CLIENT_SECRET"))
+
 import sqlite3
 from flask_dance.contrib.google import make_google_blueprint, google
 
@@ -19,7 +23,12 @@ DB = "tasks.db"
 google_bp = make_google_blueprint(
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
     client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
-    redirect_to="google_login"
+    redirect_to="google_login",
+    scope=[
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "openid"
+    ]
 )
 
 app.register_blueprint(google_bp, url_prefix="/login")
