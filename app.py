@@ -202,6 +202,77 @@ def all_tasks():
     return render_template("all_tasks.html", tasks=tasks)
 
 
+@app.route("/delete/<int:task_id>", methods=["POST"])
+def delete_task(task_id):
+
+    if "user_id" not in session:
+        return {"success": False}
+
+    user_id = session["user_id"]
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM tasks WHERE id=? AND user_id=?",
+        (task_id, user_id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"success": True}
+
+@app.route("/edit/<int:task_id>")
+def edit_task(task_id):
+
+    if "user_id" not in session:
+        return redirect("/")
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id=? AND user_id=?",
+        (task_id, session["user_id"])
+    )
+
+    task = cursor.fetchone()
+    conn.close()
+
+    if not task:
+        return "Task not found"
+
+    return render_template("edit_task.html", task=task)
+
+
+@app.route("/update/<int:task_id>", methods=["POST"])
+def update_task(task_id):
+
+    if "user_id" not in session:
+        return redirect("/")
+
+    name = request.form["name"]
+    description = request.form["description"]
+    start_date = request.form["start_date"]
+    due_date = request.form["due_date"]
+    category = request.form["category"]
+    status = request.form["status"]
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE tasks
+        SET name=?, description=?, start_date=?, due_date=?, category=?, status=?
+        WHERE id=? AND user_id=?
+    """, (name, description, start_date, due_date, category, status, task_id, session["user_id"]))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/tasks")
+
 # ---------------- RUN ----------------
 
 if __name__ == "__main__":
