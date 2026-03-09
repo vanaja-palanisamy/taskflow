@@ -237,11 +237,21 @@ def edit_task(task_id):
         (task_id, session["user_id"])
     )
 
-    task = cursor.fetchone()
+    t = cursor.fetchone()
     conn.close()
 
-    if not task:
+    if not t:
         return "Task not found"
+
+    task = {
+        "id": t[0],
+        "name": t[2],
+        "description": t[3],
+        "start_date": t[4],
+        "due_date": t[5],
+        "category": t[6],
+        "status": t[7]
+    }
 
     return render_template("edit_task.html", task=task)
 
